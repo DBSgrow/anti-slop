@@ -6,7 +6,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-Nothing yet.
+### Fixed
+
+- `anti-slop-plugin/hooks/hooks.json` carried a top-level `comment` object that
+  Claude Code does not recognise, so every session started with
+  `hooks.json: unknown key "comment" ignored`. The notes moved to
+  `anti-slop-plugin/hooks/README.md`; the file now holds only `description`
+  and `hooks`.
 
 ## [0.1.0] - 2026-07-28
 

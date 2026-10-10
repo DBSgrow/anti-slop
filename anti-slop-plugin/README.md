@@ -142,6 +142,7 @@ anti-slop-plugin/
     false-positives.md          what not to flag, and the ethics
   hooks/hooks.json              house style gate; not skill-gated, fires on
                                 every Write and Edit in every project
+  hooks/README.md               exit codes, failure behaviour, environment
   README.md
 ```
 
