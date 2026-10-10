@@ -14,9 +14,23 @@ the plugin installs or removes this hook. It never writes to
 Removing the plugin removes the behaviour completely.
 
 Note the limit of that statement: it describes where the hook is registered,
-not where it runs. While installed it is active globally, in every project,
-because nothing gates it on a skill or a path. See `SECURITY.md` at the
-repository root.
+not where it runs. Nothing gates it on a skill, so it fires in every session
+where the plugin is enabled. See `SECURITY.md` at the repository root.
+
+## Scope
+
+The linter runs only when both conditions hold:
+
+- The written file is prose: `.md`, `.markdown`, `.mdx`, `.txt` or `.rst`.
+  Code and config are skipped, because a spaced double hyphen is correct in a
+  shell command or a test fixture. CI still gates long dashes in `.py`,
+  `.json` and `.yml`.
+- The written file resolves, after symlinks, to a path inside the project the
+  session was started in (`CLAUDE_PROJECT_DIR`, falling back to the hook
+  input's `cwd`). A session started in this repository that edits a file in
+  another directory does not restyle that file.
+
+Every other write exits 0 without running the linter.
 
 ## Exit codes
 
@@ -49,7 +63,11 @@ them.
 
 ## Failure behaviour
 
-Silent no-op when the linter script is absent (the sibling brain repo is not
+Exit 2 arrives after the write has happened. `PostToolUse` cannot undo a
+write; it reports the violation so the model corrects the file.
+
+Silent no-op when the written file is out of scope (see Scope), when the
+linter script is absent (the sibling brain repo is not
 checked out), when the tool input carried no `file_path`, or when the written
 path no longer exists. A missing gate must not block unrelated work, and a
 blocked write on a missing dependency would be impossible for the model to

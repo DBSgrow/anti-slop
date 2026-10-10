@@ -1,5 +1,5 @@
 {
-  "description": "Anti-slop house style gate. After any Write or Edit, runs the voice linter at ${CLAUDE_PLUGIN_ROOT}/../anti-slop-brain/scripts/lint_voice.py over the file that was just written. On a house style violation it exits 2, which blocks and feeds the linter output back for self-correction. It is installed and removed with this plugin and it never writes to any global or project settings file, but it is NOT skill-gated and its effect is not confined to this project: the matcher is Write|Edit with no condition on which skill is active, so while the plugin is installed it fires on every Write and Edit in every session and every repository, including ones unrelated to this project. See SECURITY.md, and hooks/README.md for exit codes, failure behaviour and environment.",
+  "description": "Anti-slop house style gate. After a Write or Edit, runs the voice linter at ${CLAUDE_PLUGIN_ROOT}/../anti-slop-brain/scripts/lint_voice.py over the file that was just written, but only when that file is prose (.md, .markdown, .mdx, .txt, .rst) and lies inside the current project (CLAUDE_PROJECT_DIR). On a house style violation it exits 2, which feeds the linter output back for self-correction; the write itself has already happened. It is installed and removed with this plugin and it never writes to any global or project settings file. It is NOT skill-gated: while the plugin is enabled for a project, it fires on every prose Write and Edit inside that project. See SECURITY.md, and hooks/README.md for scope, exit codes, failure behaviour and environment.",
   "hooks": {
     "PostToolUse": [
       {
@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 -c \"import json,os,subprocess,sys; d=json.load(sys.stdin); p=(d.get('tool_input') or {}).get('file_path') or ''; s=os.path.join(os.environ.get('CLAUDE_PLUGIN_ROOT',''),'..','anti-slop-brain','scripts','lint_voice.py'); r=(subprocess.run([sys.executable,s,p],capture_output=True,text=True) if (p and os.path.isfile(p) and os.path.isfile(s)) else None); bad=bool(r) and r.returncode!=0; sys.stderr.write((r.stdout+r.stderr) if bad else ''); sys.exit(2 if bad else 0)\"",
+            "command": "python3 -c \"import json,os,subprocess,sys; d=json.load(sys.stdin); p=(d.get('tool_input') or {}).get('file_path') or ''; s=os.path.join(os.environ.get('CLAUDE_PLUGIN_ROOT',''),'..','anti-slop-brain','scripts','lint_voice.py'); root=os.path.realpath(os.environ.get('CLAUDE_PROJECT_DIR') or d.get('cwd') or os.getcwd()); rp=os.path.realpath(p) if p else ''; inside=bool(rp) and (rp==root or rp.startswith(root.rstrip(os.sep)+os.sep)); prose=os.path.splitext(p)[1].lower() in ('.md','.markdown','.mdx','.txt','.rst'); r=(subprocess.run([sys.executable,s,p],capture_output=True,text=True) if (inside and prose and os.path.isfile(p) and os.path.isfile(s)) else None); bad=bool(r) and r.returncode!=0; sys.stderr.write((r.stdout+r.stderr) if bad else ''); sys.exit(2 if bad else 0)\"",
             "timeout": 15
           }
         ]
